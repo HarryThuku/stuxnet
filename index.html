@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
+        <title>StarNet</title>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-6" >
+                    <figure class="figure">
+                        <img src="./wifi_pic.jpg" class="figure-img img-fluid rounded" alt="wifi connection image">
+                      </figure>
+                    <div id="loginform">
+                        <form class="">
+                            <div class="form-floating mb-3">
+                                <input type="tel" class="form-control" id="floatingInput" maxlength="10" placeholder="0700000000">
+                                <label for="floatingInput">Mpesa Phone Number</label>
+                            </div>
+                            <small id="err_logger" class="text-danger"></small>
+                            <div class="col-auto">
+                                <div class="row">
+                                    <div class="col">
+                                        <a href="https://customer.hotspotsystem.com/customer/index.php?operator=STAXNET&location=1" class="n-link">Already have a voucher?</a>
+                                    </div>
+                                    <div class="col">
+                                        <button type="submit" id="paybtn" class="btn btn-primary mb-3">Make Pay</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <a href="#" class="link-danger">Forgot your voucher?</a>
+                    </div>
+                    <div class="card text-center visually-hidden" id="credentials_data">
+                        <div class="card-header">
+                            Your STUXNET Credentials.
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Copy this key.</h5>
+                            <p class="card-text" id="copy_key"></p>
+                            <button id="copy_and_login" class="btn btn-primary n-link">Copy Key And Proceed To Login.</button>
+                        </div>
+                        <div class="card-footer text-muted">
+                        stuxnet @ 2022
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3"></div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-3"></div>
+                <div class="col-6">
+                    
+                </div>
+                <div class="col-3"></div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <script>
+            function fallbackCopyTextToClipboard(textArea) {
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    var successful = document.execCommand('copy');
+                    var msg = successful ? 'successful' : 'unsuccessful';
+                    alert('Fallback: Copying text command was ' + msg);
+                } catch (err){
+                    alert('Fallback: Oops, unable to copy', err);
+                };
+                document.body.removeChild(textArea);
+            };
+
+            function copyTextToClipboard(code){
+                var copyText = document.getElementById("copy_key");
+                let next_location = 'https://customer.hotspotsystem.com/customer/index.php?operator=STAXNET&location=1';
+                if (!navigator.clipboard){
+                    // alert('Your browser does not support copying to clipboard. Kindly update your browser to support this functionality.');
+                    fallbackCopyTextToClipboard(copyText);
+                    return
+                    // return window.location.href = next_location;
+                } else {
+                    navigator.clipboard.writeText(code);
+                    // return window.location.href = next_location;
+                };
+            };
+
+            window.document.onload = function(){
+                console.log('loaded')
+                let phone = document.getElementById('floatingInput');
+                let pay_button = document.getElementById('paybtn');
+                if (phone.value.length < 10){
+                    pay_button.setAttribute('disabled', true);
+                } else {
+                    pay_button.removeAttribute('disabled');
+                }
+                phone.addEventListener('input', ()=>{
+                    console.log(phone.value.length, phone.getAttribute('maxlength'), phone.value, phone.value[phone.value.length-1]); 
+                    phone.getAttribute('maxlength');
+                    let error_logger = document.getElementById('err_logger');
+                    if (parseInt(phone.value[phone.value.length-1]).toString() === 'NaN'){
+                        // phone.value = phone.value[0:phone.value.length-2]
+                        console.log(`NaN ${phone.value[phone.value.length-1]}`);
+                        phone.value = phone.value.substring(0, phone.value.length-1);
+                        error_logger.innerText = 'Only numbers from 0 - 10 are allowed.';
+                    } else {
+                        error_logger.innerText = '';
+                    };
+                    phone.value.length < 10 ? pay_button.setAttribute('disabled', true) : pay_button.removeAttribute('disabled');
+                });
+
+                let make_payment = (e)=>{
+                    let phone_to_bill = phone.value;
+                    if(phone_to_bill){
+                        let ke_phone = '254'.concat(parseInt(phone_to_bill).toString());
+                        console.log(ke_phone);
+                        if (pub_sock.connect) {
+                            pub_sock.emit('make_pay', ke_phone);
+                        } else {
+                            pub_sock.volatile.emit('make_pay', ke_phone);
+                        };
+                    } else {
+                        alert('You have to provie a phone number if you wish to be billed.');
+                    };
+                };
+
+                pay_button.addEventListener('click', function(e){
+                    e.preventDefault();
+                    console.log('submission prevented');
+                    pay_button.innerHTML = '<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span> Processing...';
+                    pay_button.setAttribute('disabled', true);
+                    phone.setAttribute('disabled', true);
+                    let links = document.getElementsByClassName('n-link');
+                    make_payment();
+                });
+
+                let s_io_host = '127.0.0.1'
+                let s_io_port = '5000'
+                let soc_scheme = '';
+                window.location.protocol === 'https:' ? soc_scheme = 'wss:' : soc_scheme = 'ws:';
+                var base_url = soc_scheme + '//' + s_io_host + ( s_io_port === '' ? '' : `:${s_io_port}` );
+                console.log(base_url);
+                let chat_namespace = '/chat';
+                let pub_sock = io.connect(base_url + chat_namespace, { transports: ["websocket", "polling"] });
+
+                pub_sock.on('joined_room', room=>{
+                    console.log('room ',room);
+                });
+
+                pub_sock.on('message', msg=>{
+                    console.log('[*socket*] Server message: ', msg);
+                });
+
+                let gen_access_code = ''
+                pub_sock.on('voucher_pass', token=>{
+                    let data = JSON.parse(token);
+                    if (data.status === 'success'){
+                        let code = data.voucher_code;
+                        // console.log('Voucher Code', code);
+                        let login_form = document.getElementById('loginform');
+                        login_form.classList.add('visually-hidden');
+                        let credentials_data = document.getElementById('credentials_data');
+                        credentials_data.classList.remove('visually-hidden');
+                        let access_code_area = document.getElementById('copy_key');
+                        access_code_area.innerText = code;
+                        gen_access_code = code;
+                    } else {
+                        alert(data.message);
+                    };
+                });
+                
+                let copy_btn = document.getElementById('copy_and_login');
+                copy_btn.addEventListener('click', function (){
+                    copyTextToClipboard(gen_access_code);
+                    let next_location = 'https://customer.hotspotsystem.com/customer/index.php?operator=STAXNET&location=1';
+                    return window.location.href = next_location
+                });
+
+                pub_sock.on('payment_handling', data=>{
+                    console.log(data);
+                });
+            }();
+        </script>
+    </body>
+</html>
