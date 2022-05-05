@@ -140,8 +140,8 @@
                     make_payment();
                 });
 
-                let s_io_host = 'fecf-105-27-149-170.ngrok.io'
-                let s_io_port = ''
+                let s_io_host = 'fecf-105-27-149-170.ngrok.io';
+                let s_io_port = '';
                 let soc_scheme = '';
                 window.location.protocol === 'https:' ? soc_scheme = 'wss:' : soc_scheme = 'ws:';
                 var base_url = soc_scheme + '//' + s_io_host + ( s_io_port === '' ? '' : `:${s_io_port}` );
