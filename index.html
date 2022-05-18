@@ -83,7 +83,7 @@
                 if (!navigator.clipboard){
                     // alert('Your browser does not support copying to clipboard. Kindly update your browser to support this functionality.');
                     fallbackCopyTextToClipboard(copyText);
-                    return
+                    return;
                     // return window.location.href = next_location;
                 } else {
                     navigator.clipboard.writeText(code);
